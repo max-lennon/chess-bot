@@ -3,8 +3,8 @@ import numpy as np
 
 # TODO: Implement move legality based on checking the king
 class ChessPiece:
-    def __init__(self, point_value: int, starting_pos: np.ndarray, long_range: bool, white: bool, piece_type: str):
-        self.point_value = point_value
+    def __init__(self, point_value: int, starting_pos: np.ndarray, long_range: bool, white: bool, piece_type: int):
+        self.point_value = point_value if white else -point_value
         self.starting_pos = starting_pos
         self.position = starting_pos
         self.reachable_squares = []
@@ -12,9 +12,6 @@ class ChessPiece:
         self.long_range = long_range
         self.white = white
         self.piece_type = piece_type
-
-        if not white:
-            self.point_value *= -1
 
 
     # def verify_move(self, square, capture=False):
@@ -42,11 +39,9 @@ class ChessPiece:
 # TODO: Implement en passant rule for pawns
 class Pawn(ChessPiece):
     def __init__(self, starting_pos: (int, int), white: bool):
-        super().__init__(point_value=1, starting_pos=starting_pos, long_range=False, white=white, piece_type="pawn")
-        if self.white:
-            self.move_units = [np.array([0, 1])]
-        else:
-            self.move_units = [np.array([0, -1])]
+        super().__init__(point_value=1, starting_pos=starting_pos, long_range=False, white=white,
+                         piece_type=1 if white else -1)
+        self.move_units = [np.array([0, 1])] if white else [np.array([0, -1])]
 
     # def calc_moves(self):
     #     self.reachable_squares = []
@@ -70,7 +65,8 @@ class Pawn(ChessPiece):
 
 class Bishop(ChessPiece):
     def __init__(self, starting_pos, white):
-        super().__init__(point_value=3, starting_pos=starting_pos, long_range=True, white=white, piece_type="bishop")
+        super().__init__(point_value=3, starting_pos=starting_pos, long_range=True, white=white,
+                         piece_type=2 if white else -2)
         self.move_units = [np.array(vec) for vec in [[1, 1], [1, -1], [-1, 1], [-1, -1]]]
 
     # def calc_moves(self):
@@ -94,7 +90,8 @@ class Bishop(ChessPiece):
 
 class Knight(ChessPiece):
     def __init__(self, starting_pos, white):
-        super().__init__(point_value=3, starting_pos=starting_pos, long_range=False, white=white, piece_type="knight")
+        super().__init__(point_value=3, starting_pos=starting_pos, long_range=False, white=white,
+                         piece_type=3 if white else -3)
         self.move_units = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]]
 
     # def calc_moves(self):
@@ -108,7 +105,8 @@ class Knight(ChessPiece):
 
 class Rook(ChessPiece):
     def __init__(self, starting_pos, white):
-        super().__init__(point_value=5, starting_pos=starting_pos, long_range=True, white=white, piece_type="rook")
+        super().__init__(point_value=5, starting_pos=starting_pos, long_range=True, white=white,
+                         piece_type=4 if white else -4)
         self.move_units = [np.array(vec) for vec in [[0, 1], [0, -1], [1, 0], [-1, 0]]]
 
     # def calc_moves(self):
@@ -132,7 +130,8 @@ class Rook(ChessPiece):
 
 class Queen(ChessPiece):
     def __init__(self, starting_pos, white):
-        super().__init__(point_value=9, starting_pos=starting_pos, long_range=True, white=white, piece_type="queen")
+        super().__init__(point_value=9, starting_pos=starting_pos, long_range=True, white=white,
+                         piece_type=5 if white else -5)
         self.move_units = [np.array(vec) for vec in
                            [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]]
 
@@ -157,7 +156,8 @@ class Queen(ChessPiece):
 
 class King(ChessPiece):
     def __init__(self, starting_pos, white):
-        super().__init__(point_value=np.inf, starting_pos=starting_pos, long_range=False, white=white, piece_type="king")
+        super().__init__(point_value=np.inf, starting_pos=starting_pos, long_range=False, white=white,
+                         piece_type=6 if white else -6)
         self.move_units = [np.array(vec) for vec in
                            [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]]
 

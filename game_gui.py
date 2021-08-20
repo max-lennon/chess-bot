@@ -4,6 +4,8 @@ from PIL import ImageTk, Image
 from chess_piece import *
 from chess_game import ChessBoard
 
+type_dict = {1: "pawn", 2: "bishop", 3: "knight", 4: "rook", 5: "queen", 6: "king"}
+
 class Application(tk.Frame):
 
     def __init__(self, master=None):
@@ -69,12 +71,13 @@ class Application(tk.Frame):
                 self.add_piece(Pawn(np.array([i, pawn_row]), white))
 
     def add_piece(self, piece: ChessPiece):
+
         filename = "./assets/pieces/"
         if piece.white:
             filename += "white_"
         else:
             filename += "black_"
-        filename += piece.piece_type
+        filename += type_dict[abs(piece.piece_type)]
 
         if (piece.position[0] + piece.position[1]) % 2 == 0:
             filename += "_dark.png"
@@ -94,7 +97,7 @@ class Application(tk.Frame):
     def show_moves(self, piece: ChessPiece):
         for board_piece in self.piece_dict.keys():
             self.piece_dict[board_piece].bind("<ButtonPress-1>", lambda event, board_piece=board_piece: self.show_moves(board_piece))
-        self.board.calc_moves(piece)
+        piece.reachable_squares = self.board.calc_moves(piece, self.board.board_state)
         for label in self.move_labels:
             label.destroy()
         self.move_labels = []
@@ -119,7 +122,7 @@ class Application(tk.Frame):
                     filename += "white_"
                 else:
                     filename += "black_"
-                filename += target_piece.piece_type
+                filename += type_dict[abs(target_piece.piece_type)]
 
                 if (target_piece.position[0] + target_piece.position[1]) % 2 == 0:
                     filename += "_dark_highlight.png"
@@ -171,7 +174,7 @@ class Application(tk.Frame):
             filename += "white_"
         else:
             filename += "black_"
-        filename += piece.piece_type
+        filename += type_dict[abs(piece.piece_type)]
 
         if (piece.position[0] + piece.position[1]) % 2 == 0:
             filename += "_dark.png"
