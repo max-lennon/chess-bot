@@ -232,7 +232,7 @@ class ChessBoard:
                     if piece.position[0] - move[0] < -1:
                         self.move_piece(self.board[7][piece.position[1]], np.array([5, piece.position[1]]))
                     elif piece.position[0] - move[0] > 1:
-                        self.move_piece(self.board[0][piece.position[1]], np.array([2, piece.position[1]]))
+                        self.move_piece(self.board[0][piece.position[1]], np.array([3, piece.position[1]]))
                 elif piece.__class__ is Rook:
                     if piece.white:
                         if self.board_state[4][0] == 6:
