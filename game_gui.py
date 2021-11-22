@@ -144,14 +144,40 @@ class Application(tk.Frame):
 
     def move_piece(self, piece: ChessPiece, move: np.ndarray):
         self.piece_dict[piece].bind("<ButtonPress-1>", lambda event: self.show_moves(piece))
+        prev_pos = piece.position
         if np.asarray(piece.reachable_squares).__contains__(move):
-            self.board.move_piece(piece, move)
-            new_x, new_y = self.get_coords(move)
-            self.piece_dict[piece].place(x=new_x, y=new_y)
-            self.update_bg_color(piece)
-            for label in self.move_labels:
-                label.destroy()
-            self.move_labels = []
+            if self.board.move_piece(piece, move):
+                if piece.__class__ is King and prev_pos[0] - move[0] > 1:
+                    new_x, new_y = self.get_coords(move)
+                    self.piece_dict[piece].place(x=new_x, y=new_y)
+                    self.update_bg_color(piece)
+
+                    rook_x, rook_y = self.get_coords(move + np.array([1,0]))
+                    self.piece_dict[self.board.board[3][move[1]]].place(x=rook_x, y=rook_y)
+                    self.update_bg_color(self.board.board[3][move[1]])
+
+                    for label in self.move_labels:
+                        label.destroy()
+                    self.move_labels = []
+                elif piece.__class__ is King and prev_pos[0] - move[0] < -1:
+                    new_x, new_y = self.get_coords(move)
+                    self.piece_dict[piece].place(x=new_x, y=new_y)
+                    self.update_bg_color(piece)
+
+                    rook_x, rook_y = self.get_coords(move - np.array([1, 0]))
+                    self.piece_dict[self.board.board[5][move[1]]].place(x=rook_x, y=rook_y)
+                    self.update_bg_color(self.board.board[5][move[1]])
+
+                    for label in self.move_labels:
+                        label.destroy()
+                    self.move_labels = []
+                else:
+                    new_x, new_y = self.get_coords(move)
+                    self.piece_dict[piece].place(x=new_x, y=new_y)
+                    self.update_bg_color(piece)
+                    for label in self.move_labels:
+                        label.destroy()
+                    self.move_labels = []
 
 
     def capture_piece(self, piece: ChessPiece, move: np.ndarray):
@@ -161,12 +187,13 @@ class Application(tk.Frame):
                 label.destroy()
             self.move_labels = []
             target_piece = self.board.board[move[0]][move[1]]
-            self.piece_dict[target_piece].destroy()
-            self.piece_dict.pop(target_piece, None)
-            self.board.capture_piece(piece, move)
-            new_x, new_y = self.get_coords(move)
-            self.piece_dict[piece].place(x=new_x, y=new_y)
-            self.update_bg_color(piece)
+            if self.board.capture_piece(piece, move):
+                print("Displaying capture...")
+                self.piece_dict[target_piece].destroy()
+                self.piece_dict.pop(target_piece, None)
+                new_x, new_y = self.get_coords(move)
+                self.piece_dict[piece].place(x=new_x, y=new_y)
+                self.update_bg_color(piece)
 
     def update_bg_color(self, piece: ChessPiece):
         filename = "./assets/pieces/"

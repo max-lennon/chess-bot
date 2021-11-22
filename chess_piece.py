@@ -161,6 +161,8 @@ class King(ChessPiece):
         self.move_units = [np.array(vec) for vec in
                            [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]]
 
+        self.castle_possible = [True, True]
+
     # def calc_moves(self):
     #     self.reachable_squares = []
     #
