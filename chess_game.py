@@ -7,7 +7,7 @@ class ChessBoard:
         self.board = [[None for _ in range(8)] for _ in range(8)]
         self.board_state = np.zeros((8, 8))
         self.point_balance = 0
-        self.white_turn = True
+        self.move_count = 0
 
     def place(self, piece: ChessPiece):
         start_col = piece.starting_pos[0]
@@ -47,9 +47,12 @@ class ChessBoard:
                     all(self.verify_move(piece, base_move + piece.move_units[0], game_state, capture=False)):
                 reachable_squares.append(base_move + piece.move_units[0])
 
-            if all(self.verify_capture(piece, base_move + np.array([1, 0]), game_state)):
+            if all(self.verify_capture(piece, base_move + np.array([1, 0]), game_state)) \
+                    or all(self.verify_capture(piece, base_move + np.array([1, 0]), game_state, ep=True)):
                 reachable_squares.append(base_move + np.array([1, 0]))
-            if all(self.verify_capture(piece, base_move + np.array([-1, 0]), game_state)):
+
+            if all(self.verify_capture(piece, base_move + np.array([-1, 0]), game_state)) \
+                    or all(self.verify_capture(piece, base_move + np.array([-1, 0]), game_state, ep=True)):
                 reachable_squares.append(base_move + np.array([-1, 0]))
 
         else:
@@ -97,22 +100,35 @@ class ChessBoard:
 
         return False, False
 
-    def verify_capture(self, piece: ChessPiece, move: np.ndarray, game_state: np.ndarray):
+    def verify_capture(self, piece: ChessPiece, move: np.ndarray, game_state: np.ndarray, ep=False):
         if move[0] < 0 or move[1] < 0:
             return False, False
         try:
-            target_piece = game_state[move[0], move[1]]
-            if target_piece != 0:
-                return True, piece.piece_type * target_piece < 0 and self.verify_safe(piece, move)
+            if ep:
+                if self.board[move[0]][move[1]-piece.piece_type].__class__ is not Pawn or \
+                        self.board[move[0]][move[1]-piece.piece_type].leap_move < self.move_count -1:
+                    return True, False
+                target_piece = game_state[move[0], move[1]-piece.piece_type]
+                test_board = game_state.copy()
+                test_board[move[0], move[1] - piece.piece_type] = 0
+                return True, piece.piece_type * target_piece < 0 and self.verify_safe(piece, move, state=test_board)
+
+            else:
+                target_piece = game_state[move[0], move[1]]
+                if target_piece != 0:
+                    return True, piece.piece_type * target_piece < 0 and self.verify_safe(piece, move)
         except IndexError:
             return False, False
         return False, False
 
-    def verify_safe(self, piece: ChessPiece, move: np.ndarray):
+    def verify_safe(self, piece: ChessPiece, move: np.ndarray, state=None):
 
         # print("Checking for checking...")
 
-        test_board = self.board_state.copy()
+        if state is None:
+            test_board = self.board_state.copy()
+        else:
+            test_board = state
         # print(piece.move_units)
         test_board[piece.position[0]][piece.position[1]] = 0
         test_board[move[0]][move[1]] = piece.piece_type
@@ -219,8 +235,8 @@ class ChessBoard:
         return True
 
     def move_piece(self, piece: ChessPiece, move: np.ndarray):
-        white_turn = self.white_turn
-        if piece.white == self.white_turn:
+        move_count = self.move_count
+        if (move_count % 2 == 0) == piece.white:
             if True or np.asarray(piece.reachable_squares).__contains__(move):
                 prev_pos = piece.position
                 self.board[move[0]][move[1]] = piece
@@ -240,14 +256,22 @@ class ChessBoard:
                     else:
                         if self.board[4][7] == -6:
                             self.board[4][7].castle_possible[int(piece.starting_pos[0]/7)] = False
+                elif piece.__class__ is Pawn:
+                    if abs(np.sum(move)) > 1:
+                        piece.leap_move = move_count
                 piece.position = move
-                self.white_turn = not white_turn
+                self.move_count = move_count + 1
                 return True
         return False
 
     def capture_piece(self, piece: ChessPiece, move: np.ndarray):
-        if piece.white == self.white_turn:
+        if (self.move_count % 2 == 0) == piece.white:
             target_piece = self.board[move[0]][move[1]]
+            ep = False
+            print(target_piece)
+            if target_piece is None:
+                ep = True
+                target_piece = self.board[move[0]][move[1]-piece.piece_type]
             if np.asarray(piece.reachable_squares).__contains__(move):
                 self.point_balance -= target_piece.point_value
                 prev_pos = piece.position
@@ -255,6 +279,11 @@ class ChessBoard:
                 self.board[prev_pos[0]][prev_pos[1]] = None
                 self.board_state[move[0], move[1]] = piece.piece_type
                 self.board_state[prev_pos[0], prev_pos[1]] = 0
+                if ep:
+                    print("En passant identified.")
+                    self.board_state[move[0], move[1]-piece.piece_type] = piece.piece_type
+                    self.board[move[0]][move[1]-piece.piece_type] = None
+
                 if piece.__class__ is King:
                     piece.castle_available = [False, False]
                 elif piece.__class__ is Rook:
@@ -265,7 +294,7 @@ class ChessBoard:
                         if self.board[4][7] is ChessPiece and self.board[4][7].__class__ is King:
                             self.board[4][7].castle_possible[int(piece.starting_pos[0] / 7)] = False
                 piece.position = move
-                self.white_turn = not self.white_turn
+                self.move_count += 1
                 return True
         return False
 

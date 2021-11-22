@@ -42,6 +42,7 @@ class Pawn(ChessPiece):
         super().__init__(point_value=1, starting_pos=starting_pos, long_range=False, white=white,
                          piece_type=1 if white else -1)
         self.move_units = [np.array([0, 1])] if white else [np.array([0, -1])]
+        self.leap_move = -1
 
     # def calc_moves(self):
     #     self.reachable_squares = []

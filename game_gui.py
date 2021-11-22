@@ -146,7 +146,21 @@ class Application(tk.Frame):
         self.piece_dict[piece].bind("<ButtonPress-1>", lambda event: self.show_moves(piece))
         prev_pos = piece.position
         if np.asarray(piece.reachable_squares).__contains__(move):
-            if self.board.move_piece(piece, move):
+            if piece.__class__ is Pawn and not any(piece.position == move) and \
+                 self.board.board_state[move[0]][move[1]] == 0:
+                target_piece = self.board.board[move[0]][move[1]-piece.piece_type]
+                for label in self.move_labels:
+                    label.destroy()
+                self.move_labels = []
+                if self.board.capture_piece(piece, move):
+                    print("Displaying capture...")
+                    self.piece_dict[target_piece].destroy()
+                    self.piece_dict.pop(target_piece, None)
+                    new_x, new_y = self.get_coords(move)
+                    self.piece_dict[piece].place(x=new_x, y=new_y)
+                    self.update_bg_color(piece)
+
+            elif self.board.move_piece(piece, move):
                 if piece.__class__ is King and prev_pos[0] - move[0] > 1:
                     new_x, new_y = self.get_coords(move)
                     self.piece_dict[piece].place(x=new_x, y=new_y)
